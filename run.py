@@ -1,5 +1,7 @@
 from core import JungleClient
 
+from secret import BOT_TOKEN
+
 if __name__ == '__main__':
     client = JungleClient()
-    client.run('NzI4NTY3MjU2MTkxMzM2NDc5.XwA0gw.9en7G22PDpzFJEuKymX1StBVU3E')
+    client.run(BOT_TOKEN)
