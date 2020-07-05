@@ -260,5 +260,6 @@ pyvenv.cfg
 pip-selfcheck.json
 
 secret.py
+JsonBases/
 
 # End of https://www.toptal.com/developers/gitignore/api/pycharm,git,python,venv

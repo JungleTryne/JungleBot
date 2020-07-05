@@ -3,6 +3,10 @@ from secret import BOT_TOKEN
 
 from BotCogs import greeting, admin
 
+import os
+
+absolute_path = os.path.dirname(os.path.abspath(__file__))
+
 modules = [
     greeting,
     admin,

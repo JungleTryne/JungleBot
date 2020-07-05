@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 
+from UserBase.utils import UserRecord
+
 
 class AdminCog(commands.Cog):
     def __init__(self, bot) -> None:
@@ -10,9 +12,21 @@ class AdminCog(commands.Cog):
         """
         self.bot = bot
 
+    @commands.command()
+    @commands.has_any_role("Admin", "Moderator")
+    async def stats(self, ctx, user: discord.User):
+        """
+        Команда печатания статистики пользователя
+        :param ctx: контекст команды
+        :param user: объект пользователя
+        :return: None
+        """
+        # TODO: for testing purposes
+        user_record = UserRecord(user)
+
     # TODO: Catch exception of commands.has_role
     @commands.command()
-    @commands.has_role("admin")
+    @commands.has_role("Admin")
     async def ban(self, ctx, user: discord.User, *, reason: str = None):
         """
         Команда бана пользователя со сервера
