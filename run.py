@@ -1,12 +1,11 @@
 from core import JungleClient
-
 from secret import BOT_TOKEN
 
-from BotCogs.greeting import Greetings
-import discord
-from discord.ext import commands
+from BotCogs import greeting, admin
 
 if __name__ == '__main__':
     bot = JungleClient('.')
-    bot.add_cog(Greetings(bot))
+    greeting.setup(bot)
+    admin.setup(bot)
+
     bot.run(BOT_TOKEN)

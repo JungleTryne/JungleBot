@@ -20,3 +20,12 @@ class Greetings(commands.Cog):
         channel = member.guild.system_channel
         if channel is not None:
             await channel.send('Welcome {0.mention}.'.format(member))
+
+
+def setup(bot):
+    """
+    Функция добавления функциональности Cog к боту
+    :param bot: объект бота
+    :return: None
+    """
+    bot.add_cog(Greetings(bot))
