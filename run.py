@@ -3,9 +3,15 @@ from secret import BOT_TOKEN
 
 from BotCogs import greeting, admin
 
+modules = [
+    greeting,
+    admin,
+]
+
 if __name__ == '__main__':
     bot = JungleClient('.')
-    greeting.setup(bot)
-    admin.setup(bot)
+
+    for module in modules:
+        module.setup(bot)
 
     bot.run(BOT_TOKEN)
