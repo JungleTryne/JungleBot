@@ -1,11 +1,9 @@
-from typing import Optional
-import os
-
 import discord
 import json
+import os
 
 from datetime import datetime
-
+from typing import Optional
 from run import absolute_path
 
 

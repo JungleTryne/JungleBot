@@ -1,9 +1,9 @@
-import discord
-from discord.ext import commands
 import asyncio
-
-from UserBase.utils import UserRecord, get_user_history_by_id
+import discord
 import json
+
+from discord.ext import commands
+from UserBase.utils import UserRecord, get_user_history_by_id
 
 
 class AdminCog(commands.Cog):
@@ -21,7 +21,7 @@ class AdminCog(commands.Cog):
                    reason: str = None):
         """
         Команда мута пользователей на сервере
-        :param ctx: контекстс команды
+        :param ctx: контекст команды
         :param members: список пользователей для мута
         :param duration: продолжительность мута в минутах
         :param reason: причина мута
@@ -49,15 +49,13 @@ class AdminCog(commands.Cog):
                 await member.remove_roles(muted_role, reason="Время мута вышло")
 
     @mute.error
-    async def mute_handler(self, ctx, error):
+    async def mute_handler(self, ctx):
         """
         Обработчик ошибок команды mute
         :param ctx: контекст команды
-        :param error: исключение
         :return: None
         """
-        print(error.args)
-        await ctx.channel.send("User not found. Probably")
+        await ctx.channel.send("User not found or internal error occurred")
 
     @commands.command()
     @commands.has_any_role("Admin", "Moderator")
