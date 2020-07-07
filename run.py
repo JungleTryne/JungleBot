@@ -13,7 +13,7 @@ modules = [
 ]
 
 if __name__ == '__main__':
-    bot = JungleClient('.')
+    bot = JungleClient('j.')
 
     for module in modules:
         module.setup(bot)
