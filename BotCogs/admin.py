@@ -61,6 +61,19 @@ class AdminCog(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Admin", "Moderator")
+    async def unmute(self, ctx, members: commands.Greedy[discord.Member]):
+        """
+        Команда размута пользователя сервера
+        :param ctx: контекст команды
+        :param members: список пользователей для размута
+        :return: None
+        """
+        muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
+        for member in members:
+            await member.remove_roles(muted_role, reason="Разбанен стафом")
+
+    @commands.command()
+    @commands.has_any_role("Admin", "Moderator")
     async def stats(self, ctx, user: discord.User):
         """
         Команда печатания статистики пользователя

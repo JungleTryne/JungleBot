@@ -17,8 +17,8 @@ def fix_log_existence(guild_id: str):
     :return: None
     """
     if not os.path.exists(absolute_path + '/JsonBases/{0}.json'.format(guild_id)):
-        with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'w+') as json_file:
-            json.dump({}, json_file)
+        with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'w+', encoding="utf8") as json_file:
+            json.dump({}, json_file, ensure_ascii=False)
 
 
 def save_data(func):
@@ -45,7 +45,7 @@ def get_user_history(guild: discord.Guild, user: discord.User) -> Optional[dict]
     guild_id = str(guild.id)
 
     fix_log_existence(guild_id)
-    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r') as json_file:
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r', encoding='utf8') as json_file:
         data = json.load(json_file)
     if str(user.id) not in data:
         return None
@@ -63,7 +63,7 @@ def get_user_history_by_id(guild: discord.Guild, user_id: str) -> Optional[dict]
     """
     guild_id = str(guild.id)
     fix_log_existence(guild_id)
-    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r') as json_file:
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r', encoding='utf8') as json_file:
         data = json.load(json_file)
     if user_id not in data:
         return None
@@ -80,13 +80,13 @@ def save_user_history(guild: discord.Guild, user: discord.User, history: dict) -
     """
     guild_id = str(guild.id)
     fix_log_existence(guild_id)
-    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r') as json_file:
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r', encoding='utf8') as json_file:
         data = json.load(json_file)
 
     data[str(user.id)] = history
 
-    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'w') as json_file:
-        json.dump(data, json_file)
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'w', encoding='utf8') as json_file:
+        json.dump(data, json_file, ensure_ascii=False)
 
 
 class UserRecord:
