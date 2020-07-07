@@ -19,3 +19,4 @@ if __name__ == '__main__':
         module.setup(bot)
 
     bot.run(BOT_TOKEN)
+
