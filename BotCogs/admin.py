@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
 
-from UserBase.utils import UserRecord
+from UserBase.utils import UserRecord, get_user_history_by_id
+import json
 
 
 class AdminCog(commands.Cog):
@@ -21,8 +22,27 @@ class AdminCog(commands.Cog):
         :param user: объект пользователя
         :return: None
         """
-        # TODO: for testing purposes
         user_record = UserRecord(user)
+
+        prettified_view = json.dumps(user_record.history, indent=2, sort_keys=True)
+        await ctx.channel.send("```{0}```".format(prettified_view))
+
+    @stats.error
+    async def stats_handler(self, ctx, error):
+        """
+        Локальный обработчик ошибок команды stats.
+        :param ctx: контектст команды
+        :param error: исключение
+        :return: None
+        """
+        if isinstance(error, commands.BadArgument):
+            user_id = error.args[0].split()[1][1:-1]
+            history = get_user_history_by_id(user_id)
+            if not history:
+                await ctx.channel.send("User Not Found")
+                return
+            prettified_view = json.dumps(history, indent=2, sort_keys=True)
+            await ctx.channel.send("```{0}```".format(prettified_view))
 
     # TODO: Catch exception of commands.has_role
     @commands.command()
@@ -38,13 +58,17 @@ class AdminCog(commands.Cog):
 
         if reason is None:
             reason = "For being a jerk!"
+
+        user_record = UserRecord(user)
+        user_record.set_ban(reason)
+
         message = "Вы были забанены по причине: {0}".format(reason)
         await user.send(message)
         await ctx.guild.ban(user, reason=reason)
         await ctx.channel.send("Пользователь {0} был забанен".format(user))
 
     @commands.command()
-    @commands.has_role("admin")
+    @commands.has_role("Admin")
     async def unban(self, ctx, user_id):
         """
         Команда разбана
