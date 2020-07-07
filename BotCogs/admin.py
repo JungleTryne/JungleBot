@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import asyncio
 
 from UserBase.utils import UserRecord, get_user_history_by_id
 import json
@@ -15,6 +16,51 @@ class AdminCog(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Admin", "Moderator")
+    async def mute(self, ctx, members: commands.Greedy[discord.Member],
+                   duration: int = 0, *,
+                   reason: str = None):
+        """
+        Команда мута пользователей на сервере
+        :param ctx: контекстс команды
+        :param members: список пользователей для мута
+        :param duration: продолжительность мута в минутах
+        :param reason: причина мута
+        :return: None
+        """
+
+        if reason is None:
+            reason = "For being a jerk"
+        muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
+
+        if not members:
+            await ctx.send("Не смог понять, кого мутить :)")
+
+        for member in members:
+            if self.bot.user == member:
+                continue
+            user_record = UserRecord(member)
+            user_record.set_mute(duration, reason)
+            await member.add_roles(muted_role, reason=reason)
+            await ctx.send("{0.mention} был замучен за *{1}*".format(member, reason))
+
+        if duration > 0:
+            await asyncio.sleep(duration * 60)
+            for member in members:
+                await member.remove_roles(muted_role, reason="Время мута вышло")
+
+    @mute.error
+    async def mute_handler(self, ctx, error):
+        """
+        Обработчик ошибок команды mute
+        :param ctx: контекст команды
+        :param error: исключение
+        :return: None
+        """
+        print(error.args)
+        await ctx.channel.send("User not found. Probably")
+
+    @commands.command()
+    @commands.has_any_role("Admin", "Moderator")
     async def stats(self, ctx, user: discord.User):
         """
         Команда печатания статистики пользователя
@@ -25,7 +71,7 @@ class AdminCog(commands.Cog):
         user_record = UserRecord(user)
 
         prettified_view = json.dumps(user_record.history, indent=2, sort_keys=True)
-        await ctx.channel.send("```{0}```".format(prettified_view))
+        await ctx.channel.send("```json\n{0}```".format(prettified_view))
 
     @stats.error
     async def stats_handler(self, ctx, error):
@@ -44,7 +90,6 @@ class AdminCog(commands.Cog):
             prettified_view = json.dumps(history, indent=2, sort_keys=True)
             await ctx.channel.send("```{0}```".format(prettified_view))
 
-    # TODO: Catch exception of commands.has_role
     @commands.command()
     @commands.has_role("Admin")
     async def ban(self, ctx, user: discord.User, *, reason: str = None):

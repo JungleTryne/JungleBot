@@ -105,7 +105,7 @@ class UserRecord:
         mute['record_type'] = 'mute'
         mute['duration'] = duration
         mute['reason'] = reason
-        mute['time'] = datetime.now()
+        mute['time'] = str(datetime.now())
         self.history['records'].append(mute)
 
     @save_data
