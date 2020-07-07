@@ -1,4 +1,5 @@
 from typing import Optional
+import os
 
 import discord
 import json
@@ -8,7 +9,17 @@ from datetime import datetime
 from run import absolute_path
 
 
-# TODO: Бот может быть использован на нескольких серверах!!
+def fix_log_existence(guild_id: str):
+    """
+    Функция гарантирования существования файла лога для сервера guild_id
+    Создает файл, если он не существует
+    :param guild_id: ID сервера
+    :return: None
+    """
+    if not os.path.exists(absolute_path + '/JsonBases/{0}.json'.format(guild_id)):
+        with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'w+') as json_file:
+            json.dump({}, json_file)
+
 
 def save_data(func):
     """
@@ -19,64 +30,75 @@ def save_data(func):
 
     def decorated(self, *args):
         func(self, *args)
-        save_user_history(self.user, self.history)
+        save_user_history(self.guild, self.user, self.history)
 
     return decorated
 
 
-def get_user_history(user: discord.User) -> Optional[dict]:
+def get_user_history(guild: discord.Guild, user: discord.User) -> Optional[dict]:
     """
     Функция получения словаря-статистики пользователя на сервере
+    :param guild: Гуилд (объект сервера)
     :param user: объект пользователя
     :return: его история
     """
-    with open(absolute_path + '/JsonBases/db.json', 'r') as json_file:
+    guild_id = str(guild.id)
+
+    fix_log_existence(guild_id)
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r') as json_file:
         data = json.load(json_file)
     if str(user.id) not in data:
         return None
     return data[str(user.id)]
 
 
-def get_user_history_by_id(user_id: str) -> Optional[dict]:
+def get_user_history_by_id(guild: discord.Guild, user_id: str) -> Optional[dict]:
     """
     Функция получения словария-статистики пользователя на сервере по его DiscordID
     требуется в случае того, что пользователь, например, был забанен на сервере и
     discord.py не способен распарсить его ID
+    :param guild: Гуилд (объект сервера)
     :param user_id: ID пользователя
     :return: None
     """
-    with open(absolute_path + '/JsonBases/db.json', 'r') as json_file:
+    guild_id = str(guild.id)
+    fix_log_existence(guild_id)
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r') as json_file:
         data = json.load(json_file)
     if user_id not in data:
         return None
     return data[user_id]
 
 
-def save_user_history(user: discord.User, history: dict) -> None:
+def save_user_history(guild: discord.Guild, user: discord.User, history: dict) -> None:
     """
     Сохранение статистики пользователя
+    :param guild: Гуилд (объект сервера)
     :param user: объект пользователя
     :param history: его история
     :return: None
     """
-    with open(absolute_path + '/JsonBases/db.json', 'r') as json_file:
+    guild_id = str(guild.id)
+    fix_log_existence(guild_id)
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r') as json_file:
         data = json.load(json_file)
 
     data[str(user.id)] = history
 
-    with open(absolute_path + '/JsonBases/db.json', 'w') as json_file:
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'w') as json_file:
         json.dump(data, json_file)
 
 
 class UserRecord:
-    def __init__(self, user: discord.User):
+    def __init__(self, user: discord.User, guild: discord.Guild):
         """
         Класс-обёртка для сохрания логов
         Сохраняем все действия модераторов и администраторов:
         баны, кики, муты, заметки
         """
         self.user = user
-        self.history = get_user_history(self.user)
+        self.guild = guild
+        self.history = get_user_history(self.guild, self.user)
 
         if not self.history:
             self.generate_history()

@@ -38,7 +38,7 @@ class AdminCog(commands.Cog):
         for member in members:
             if self.bot.user == member:
                 continue
-            user_record = UserRecord(member)
+            user_record = UserRecord(member, ctx.guild)
             user_record.set_mute(duration, reason)
             await member.add_roles(muted_role, reason=reason)
             await ctx.send("{0.mention} был замучен за *{1}*".format(member, reason))
@@ -68,7 +68,7 @@ class AdminCog(commands.Cog):
         :param user: объект пользователя
         :return: None
         """
-        user_record = UserRecord(user)
+        user_record = UserRecord(user, ctx.guild)
 
         prettified_view = json.dumps(user_record.history, indent=2, sort_keys=True)
         await ctx.channel.send("```json\n{0}```".format(prettified_view))
@@ -81,9 +81,11 @@ class AdminCog(commands.Cog):
         :param error: исключение
         :return: None
         """
+        print(error.args)
+
         if isinstance(error, commands.BadArgument):
             user_id = error.args[0].split()[1][1:-1]
-            history = get_user_history_by_id(user_id)
+            history = get_user_history_by_id(ctx.guild, user_id)
             if not history:
                 await ctx.channel.send("User Not Found")
                 return
@@ -104,7 +106,7 @@ class AdminCog(commands.Cog):
         if reason is None:
             reason = "For being a jerk!"
 
-        user_record = UserRecord(user)
+        user_record = UserRecord(user, ctx.guild)
         user_record.set_ban(reason)
 
         message = "Вы были забанены по причине: {0}".format(reason)
