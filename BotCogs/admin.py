@@ -151,6 +151,28 @@ class AdminCog(commands.Cog):
         print("note_handler: {0}".format(error))
         await ctx.channel.send("User not found or internal error occurred")
 
+    async def ban_impl(self, ctx, user: discord.User, reason: str = None):
+        """
+        Реализация команды бана на сервере
+        :param ctx: контекст команды
+        :param user: пользователь дискорда
+        :param reason: причина бана
+        :return: None
+        """
+        if reason is None:
+            reason = "For being a jerk!"
+
+        if user == self.bot.user:
+            return
+
+        user_record = UserRecord(user, ctx.guild)
+        user_record.set_ban(reason)
+
+        message = "Вы были забанены по причине: {0}".format(reason)
+        await user.send(message)
+        await ctx.guild.ban(user, reason=reason)
+        await ctx.channel.send("Пользователь {0} был забанен".format(user))
+
     @commands.command()
     @commands.has_role("Admin")
     async def ban(self, ctx, user: discord.User, *, reason: str = None):
@@ -161,22 +183,33 @@ class AdminCog(commands.Cog):
         :param reason: Причина бана
         :return: None
         """
-
-        if reason is None:
-            reason = "For being a jerk!"
-
-        user_record = UserRecord(user, ctx.guild)
-        user_record.set_ban(reason)
-
-        message = "Вы были забанены по причине: {0}".format(reason)
-        await user.send(message)
-        await ctx.guild.ban(user, reason=reason)
-        await ctx.channel.send("Пользователь {0} был забанен".format(user))
+        await self.ban_impl(ctx, user, reason)
 
     @ban.error
     async def ban_handler(self, ctx, error):
+        """
+        Обработчик ошибок команды ban
+        :param ctx: контекст команды
+        :param error: текст ошибки
+        :return: None
+        """
         print("ban_handler: {0}".format(error))
         await ctx.channel.send("User not found or internal error occurred")
+
+    @staticmethod
+    async def unban_impl(ctx, user_id):
+        """
+        Имплементация команды unban
+        :param ctx: контекст команды
+        :param user_id: id пользователя
+        :return: None
+        """
+        ban_list = await ctx.guild.bans()
+        for ban_entry in ban_list:
+            if str(ban_entry.user.id) == str(user_id):
+                await ctx.guild.unban(ban_entry.user)
+                await ban_entry.user.send("Вы были разбанены!")
+                await ctx.send("Пользователь {0} разбанен!".format(ban_entry.user.mention))
 
     @commands.command()
     @commands.has_role("Admin")
@@ -187,16 +220,70 @@ class AdminCog(commands.Cog):
         :param ctx: контекстс команды
         :return: None
         """
-        ban_list = await ctx.guild.bans()
-        for ban_entry in ban_list:
-            if str(ban_entry.user.id) == str(user_id):
-                await ctx.guild.unban(ban_entry.user)
-                await ctx.send("Пользователь {0} разбанен!".format(ban_entry.user.mention))
+        await self.unban_impl(ctx, user_id)
 
     @unban.error
     async def unban_handler(self, ctx, error):
+        """
+        Обработчик ошибок команды unban
+        :param ctx: контекст команды
+        :param error: текст ошибки
+        :return: None
+        """
         print("unban_handler: {0}".format(error))
         await ctx.channel.send("User not found or internal error occurred")
+
+    @commands.command()
+    @commands.has_role("Admin")
+    async def soft_ban(self, ctx, user: discord.User, *, reason: str = None):
+        """
+        Команда "легкого бана" - бан и сразу разбан
+        :param ctx: контекст команды
+        :param user: объект пользователя
+        :param reason: причина софтбана
+        :return: None
+        """
+        await self.ban_impl(ctx, user, reason)
+        await self.unban_impl(ctx, user.id)
+
+    @soft_ban.error
+    async def soft_ban_handler(self, ctx, error):
+        """
+        Обработчик ошибок команды soft_ban
+        :param ctx: контекст команды
+        :param error: текст ошибки
+        :return: None
+        """
+        print("soft_ban_handler: {0}".format(error))
+        await ctx.channel.send("User not found or internal error occurred")
+
+    @commands.command()
+    @commands.has_any_role("Admin", "Moderator")
+    async def prune_until(self, ctx, message_id: str = None):
+        """
+        Команда удаления всех сообщений в чате вплоть до сообщения с message_id
+        :param ctx: контекст команды
+        :param message_id: id сообщения, до которого происходит удаление
+        :return: None
+        """
+        channel = ctx.channel
+        messages = await channel.history().flatten()
+        for message in messages:
+            this_id = str(message.id)
+            await message.delete()
+            if this_id == message_id:
+                break
+
+    @prune_until.error
+    async def prune_until_handler(self, ctx, error):
+        """
+        Обработчик ошибок команды soft_ban
+        :param ctx: контекст команды
+        :param error: текст ошибки
+        :return: None
+        """
+        print("prune_until_handler: {0}".format(error))
+        await ctx.channel.send("Internal error occurred")
 
 
 def setup(bot):
