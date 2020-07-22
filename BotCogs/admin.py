@@ -40,21 +40,25 @@ class AdminCog(commands.Cog):
                 continue
             user_record = UserRecord(member, ctx.guild)
             user_record.set_mute(duration, reason)
+
             await member.add_roles(muted_role, reason=reason)
+            await member.edit(voice_channel=None)  # Кикаем пользователя
             await ctx.send("{0.mention} был замучен за *{1}*".format(member, reason))
 
         if duration > 0:
-            await asyncio.sleep(duration * 60)
+            await asyncio.sleep(duration * 60)  # Если во время мута дать еще один мут, то сработает только первый
             for member in members:
                 await member.remove_roles(muted_role, reason="Время мута вышло")
 
     @mute.error
-    async def mute_handler(self, ctx):
+    async def mute_handler(self, ctx, what):
         """
         Обработчик ошибок команды mute
         :param ctx: контекст команды
+        :param what: текст ошибки
         :return: None
         """
+        print("mute_handler: {0}".format(what))
         await ctx.channel.send("User not found or internal error occurred")
 
     @commands.command()
@@ -69,6 +73,30 @@ class AdminCog(commands.Cog):
         muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
         for member in members:
             await member.remove_roles(muted_role, reason="Разбанен стафом")
+
+    @commands.command()
+    @commands.has_any_role("Admin")
+    async def clear_stats(self, ctx, user: discord.User):
+        """
+        Команда очистки статистики пользователя
+        :param ctx: контекст команды
+        :param user: объект пользователя
+        :return: None
+        """
+        user_record = UserRecord(user, ctx.guild)
+        user_record.clear_history()
+        await ctx.channel.send("История пользователя была очищена")
+
+    @clear_stats.error
+    async def clear_stats_handler(self, ctx, what):
+        """
+        Обработчик ошибок команды clear_stats
+        :param ctx: контекст команды
+        :param what: текст ошибки
+        :return: None
+        """
+        print("clear_stats_handler: {0}".format(what))
+        await ctx.channel.send("User not found or internal error occurred")
 
     @commands.command()
     @commands.has_any_role("Admin", "Moderator")
@@ -104,6 +132,26 @@ class AdminCog(commands.Cog):
             await ctx.channel.send("```{0}```".format(prettified_view))
 
     @commands.command()
+    @commands.has_any_role("Admin", "Moderator")
+    async def note(self, ctx, members: commands.Greedy[discord.Member], *, note: str = None):
+        for member in members:
+            if self.bot.user == member:
+                continue
+            user_record = UserRecord(member, ctx.guild)
+            user_record.set_note(note)
+
+    @note.error
+    async def note_handler(self, ctx, error):
+        """
+        Обработчик ошибок команды note
+        :param ctx: контекст команды
+        :param error: текст ошибки
+        :return: None
+        """
+        print("note_handler: {0}".format(error))
+        await ctx.channel.send("User not found or internal error occurred")
+
+    @commands.command()
     @commands.has_role("Admin")
     async def ban(self, ctx, user: discord.User, *, reason: str = None):
         """
@@ -125,6 +173,11 @@ class AdminCog(commands.Cog):
         await ctx.guild.ban(user, reason=reason)
         await ctx.channel.send("Пользователь {0} был забанен".format(user))
 
+    @ban.error
+    async def ban_handler(self, ctx, error):
+        print("ban_handler: {0}".format(error))
+        await ctx.channel.send("User not found or internal error occurred")
+
     @commands.command()
     @commands.has_role("Admin")
     async def unban(self, ctx, user_id):
@@ -139,6 +192,11 @@ class AdminCog(commands.Cog):
             if str(ban_entry.user.id) == str(user_id):
                 await ctx.guild.unban(ban_entry.user)
                 await ctx.send("Пользователь {0} разбанен!".format(ban_entry.user.mention))
+
+    @unban.error
+    async def unban_handler(self, ctx, error):
+        print("unban_handler: {0}".format(error))
+        await ctx.channel.send("User not found or internal error occurred")
 
 
 def setup(bot):

@@ -102,6 +102,13 @@ class UserRecord:
             self.generate_history()
 
     @save_data
+    def clear_history(self):
+        """
+        Функция очистки истории пользователя
+        """
+        self.history = dict()
+
+    @save_data
     def generate_history(self):
         """
         Функция генерации истории пользователя, если она пуста
@@ -112,6 +119,19 @@ class UserRecord:
         self.history["name"] = self.user.name
         self.history["notes"] = []
         self.history["records"] = []
+
+    @save_data
+    def set_note(self, note_text):
+        """
+        Функция создает запись в базе данных в виде заметки
+        :param note_text: текст заметки
+        :return: None
+        """
+        note = dict()
+        note['record_type'] = 'note'
+        note['time'] = str(datetime.now())
+        note['note'] = note_text
+        self.history['notes'].append(note) 
 
     @save_data
     def set_mute(self, duration, reason):

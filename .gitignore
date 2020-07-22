@@ -261,5 +261,7 @@ pip-selfcheck.json
 
 secret.py
 JsonBases/*
-.idea/*
+.idea/*'
+.vscode/*
+
 # End of https://www.toptal.com/developers/gitignore/api/pycharm,git,python,venv
