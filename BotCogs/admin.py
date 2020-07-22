@@ -16,6 +16,42 @@ class AdminCog(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Admin", "Moderator")
+    async def warn(self, ctx, members: commands.Greedy[discord.Member], *, reason: str = None):
+        """
+        Команда выдачи предупреждения пользователям
+        :param ctx: контекст команды
+        :param members: список пользователей
+        :param reason: причина предупреждения
+        :return: None
+        """
+        if reason is None:
+            reason = "For being a jerk"
+        if not members:
+            return
+        for member in members:
+            if self.bot.user == member:
+                continue
+
+            user_record = UserRecord(member, ctx.guild)
+            user_record.set_warn(reason)
+
+            await member.send("Вы были предупреждены: {0}".format(reason))
+            await ctx.send("{0.mention} был предупрежден за *{1}*".format(member, reason))
+            await self.stats_impl(ctx, member)
+
+    @warn.error
+    async def warn_handler(self, ctx, what):
+        """
+         Обработчик ошибок команды warn
+         :param ctx: контекст команды
+         :param what: текст ошибки
+         :return: None
+         """
+        print("warn_handler: {0}".format(what))
+        await ctx.channel.send("User not found or internal error occurred")
+
+    @commands.command()
+    @commands.has_any_role("Admin", "Moderator")
     async def mute(self, ctx, members: commands.Greedy[discord.Member],
                    duration: int = 0, *,
                    reason: str = None):
@@ -43,6 +79,7 @@ class AdminCog(commands.Cog):
 
             await member.add_roles(muted_role, reason=reason)
             await member.edit(voice_channel=None)  # Кикаем пользователя
+            await member.send("Вы были замьючены на {0} минут по причине: {1}".format(duration, reason))
             await ctx.send("{0.mention} был замучен за *{1}*".format(member, reason))
 
         if duration > 0:
@@ -53,11 +90,11 @@ class AdminCog(commands.Cog):
     @mute.error
     async def mute_handler(self, ctx, what):
         """
-        Обработчик ошибок команды mute
-        :param ctx: контекст команды
-        :param what: текст ошибки
-        :return: None
-        """
+         Обработчик ошибок команды mute
+         :param ctx: контекст команды
+         :param what: текст ошибки
+         :return: None
+         """
         print("mute_handler: {0}".format(what))
         await ctx.channel.send("User not found or internal error occurred")
 
@@ -86,6 +123,7 @@ class AdminCog(commands.Cog):
         user_record = UserRecord(user, ctx.guild)
         user_record.clear_history()
         await ctx.channel.send("История пользователя была очищена")
+        await self.stats_impl(ctx, user)
 
     @clear_stats.error
     async def clear_stats_handler(self, ctx, what):
@@ -98,6 +136,19 @@ class AdminCog(commands.Cog):
         print("clear_stats_handler: {0}".format(what))
         await ctx.channel.send("User not found or internal error occurred")
 
+    @staticmethod
+    async def stats_impl(ctx, user: discord.User):
+        """
+        Реализация функции просмотра статистики
+        :param ctx:
+        :param user:
+        :return:
+        """
+        user_record = UserRecord(user, ctx.guild)
+
+        prettified_view = json.dumps(user_record.history, indent=2, sort_keys=True, ensure_ascii=False)
+        await ctx.channel.send("```json\n{0}```".format(prettified_view))
+
     @commands.command()
     @commands.has_any_role("Admin", "Moderator")
     async def stats(self, ctx, user: discord.User):
@@ -107,10 +158,7 @@ class AdminCog(commands.Cog):
         :param user: объект пользователя
         :return: None
         """
-        user_record = UserRecord(user, ctx.guild)
-
-        prettified_view = json.dumps(user_record.history, indent=2, sort_keys=True)
-        await ctx.channel.send("```json\n{0}```".format(prettified_view))
+        await self.stats_impl(ctx, user)
 
     @stats.error
     async def stats_handler(self, ctx, error):
@@ -139,6 +187,7 @@ class AdminCog(commands.Cog):
                 continue
             user_record = UserRecord(member, ctx.guild)
             user_record.set_note(note)
+            await self.stats_impl(ctx, member)
 
     @note.error
     async def note_handler(self, ctx, error):
@@ -184,6 +233,7 @@ class AdminCog(commands.Cog):
         :return: None
         """
         await self.ban_impl(ctx, user, reason)
+        await self.stats_impl(ctx, user)
 
     @ban.error
     async def ban_handler(self, ctx, error):
@@ -322,6 +372,7 @@ class AdminCog(commands.Cog):
         """
         user_record = UserRecord(user, ctx.guild)
         user_record.clear_record(time_of_record)
+        await self.stats_impl(ctx, user)
 
     @clear_record.error
     async def clear_record_handler(self, ctx, error):

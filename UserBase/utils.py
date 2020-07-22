@@ -15,7 +15,7 @@ def fix_log_existence(guild_id: str):
     :return: None
     """
     if not os.path.exists(absolute_path + '/JsonBases/{0}.json'.format(guild_id)):
-        with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'w+', encoding="utf8") as json_file:
+        with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'w+', encoding="utf-8") as json_file:
             json.dump({}, json_file, ensure_ascii=False)
 
 
@@ -43,7 +43,7 @@ def get_user_history(guild: discord.Guild, user: discord.User) -> Optional[dict]
     guild_id = str(guild.id)
 
     fix_log_existence(guild_id)
-    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r', encoding='utf8') as json_file:
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
     if str(user.id) not in data:
         return None
@@ -61,7 +61,7 @@ def get_user_history_by_id(guild: discord.Guild, user_id: str) -> Optional[dict]
     """
     guild_id = str(guild.id)
     fix_log_existence(guild_id)
-    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r', encoding='utf8') as json_file:
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
     if user_id not in data:
         return None
@@ -78,12 +78,12 @@ def save_user_history(guild: discord.Guild, user: discord.User, history: dict) -
     """
     guild_id = str(guild.id)
     fix_log_existence(guild_id)
-    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r', encoding='utf8') as json_file:
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
 
     data[str(user.id)] = history
 
-    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'w', encoding='utf8') as json_file:
+    with open(absolute_path + '/JsonBases/{0}.json'.format(guild_id), 'w', encoding='utf-8') as json_file:
         json.dump(data, json_file, ensure_ascii=False)
 
 
@@ -119,6 +119,19 @@ class UserRecord:
         self.history["name"] = self.user.name
         self.history["notes"] = []
         self.history["records"] = []
+
+    @save_data
+    def set_warn(self, warn_text):
+        """
+        Функция создает запись в базе данных в виде предупреждения
+        :param warn_text: причина предупреждения
+        :return: None
+        """
+        warning = dict()
+        warning['record_type'] = 'warning'
+        warning['reason'] = warn_text
+        warning['time'] = str(datetime.now())
+        self.history['records'].append(warning)
 
     @save_data
     def set_note(self, note_text):
