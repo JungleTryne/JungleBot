@@ -14,6 +14,10 @@ class AdminCog(commands.Cog):
         """
         self.bot = bot
 
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        await ctx.channel.send(error)
+
     @commands.command()
     @commands.has_any_role("Admin", "Moderator")
     async def warn(self, ctx, members: commands.Greedy[discord.Member], *, reason: str = None):
