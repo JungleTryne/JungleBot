@@ -160,3 +160,19 @@ class UserRecord:
         ban['reason'] = reason
         ban['time'] = str(datetime.now())
         self.history['records'].append(ban)
+
+    @save_data
+    def clear_record(self, time_of_record):
+        """
+        Функция удаления записи в базе данных по таймкоду
+        :param time_of_record: таймкод записи
+        :return: None
+        """
+        for record in self.history['records']:
+            if record['time'] == time_of_record:
+                self.history['records'].remove(record)
+                return
+        for record in self.history['notes']:
+            if record['time'] == time_of_record:
+                self.history['notes'].remove(record)
+                return

@@ -277,12 +277,61 @@ class AdminCog(commands.Cog):
     @prune_until.error
     async def prune_until_handler(self, ctx, error):
         """
-        Обработчик ошибок команды soft_ban
+        Обработчик ошибок команды prune_until
         :param ctx: контекст команды
         :param error: текст ошибки
         :return: None
         """
         print("prune_until_handler: {0}".format(error))
+        await ctx.channel.send("Internal error occurred")
+
+    @commands.command()
+    @commands.has_any_role("Admin", "Moderator")
+    async def prune(self, ctx, number: int):
+        """
+        Удаляет [number] сообщений
+        :param ctx: контекст команды
+        :param number: количество сообщений
+        :return: None
+        """
+        channel = ctx.channel
+        messages = await channel.history(limit=number+1).flatten()
+        for message in messages:
+            await message.delete()
+
+    @prune.error
+    async def prune_handler(self, ctx, error):
+        """
+        Обработчик ошибок команды prune
+        :param ctx: контекст команды
+        :param error: текст ошибки
+        :return: None
+        """
+        print("prune_handler: {0}".format(error))
+        await ctx.channel.send("Internal error occurred")
+
+    @commands.command()
+    @commands.has_any_role("Admin", "Moderator")
+    async def clear_record(self, ctx, user: discord.User, *, time_of_record: str):
+        """
+        Удаляет запись или заметку по временной метки
+        :param ctx: контекст команды
+        :param user: объект пользователя
+        :param time_of_record: временная метка
+        :return: None
+        """
+        user_record = UserRecord(user, ctx.guild)
+        user_record.clear_record(time_of_record)
+
+    @clear_record.error
+    async def clear_record_handler(self, ctx, error):
+        """
+         Обработчик ошибок команды clear_record
+         :param ctx: контекст команды
+         :param error: текст ошибки
+         :return: None
+         """
+        print("clear_record_handler: {0}".format(error))
         await ctx.channel.send("Internal error occurred")
 
 
