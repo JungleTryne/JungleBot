@@ -7,11 +7,15 @@ from typing import Optional
 from run import absolute_path
 
 
+'''
+Simple database implementation
+Using json files to store the data (yeah, simple lmao)
+'''
+
 def fix_log_existence(guild_id: str):
     """
-    Функция гарантирования существования файла лога для сервера guild_id
-    Создает файл, если он не существует
-    :param guild_id: ID сервера
+    Creates database for server with [guild_id] if it doesn't exist
+    :param guild_id: server ID
     :return: None
     """
     if not os.path.exists(absolute_path + '/JsonBases/{0}.json'.format(guild_id)):
@@ -21,9 +25,9 @@ def fix_log_existence(guild_id: str):
 
 def save_data(func):
     """
-    Декоратор сохранения изменений данных пользователя функцией func
-    :param func: декорируемая функция
-    :return: декорированная функия
+    Saves user_data to database when func finishes it's job
+    :param func: function
+    :return: decorated function
     """
 
     def decorated(self, *args):
@@ -35,10 +39,10 @@ def save_data(func):
 
 def get_user_history(guild: discord.Guild, user: discord.User) -> Optional[dict]:
     """
-    Функция получения словаря-статистики пользователя на сервере
-    :param guild: Гуилд (объект сервера)
-    :param user: объект пользователя
-    :return: его история
+    Getting information about the user from the database
+    :param guild: Server Object
+    :param user: User Object
+    :return: user's stats
     """
     guild_id = str(guild.id)
 
@@ -52,11 +56,10 @@ def get_user_history(guild: discord.Guild, user: discord.User) -> Optional[dict]
 
 def get_user_history_by_id(guild: discord.Guild, user_id: str) -> Optional[dict]:
     """
-    Функция получения словария-статистики пользователя на сервере по его DiscordID
-    требуется в случае того, что пользователь, например, был забанен на сервере и
-    discord.py не способен распарсить его ID
-    :param guild: Гуилд (объект сервера)
-    :param user_id: ID пользователя
+    Getting user stats with their Discord ID.
+    This funtion is needed in case of banned users
+    :param guild: Server Object
+    :param user_id: user ID
     :return: None
     """
     guild_id = str(guild.id)
@@ -70,10 +73,10 @@ def get_user_history_by_id(guild: discord.Guild, user_id: str) -> Optional[dict]
 
 def save_user_history(guild: discord.Guild, user: discord.User, history: dict) -> None:
     """
-    Сохранение статистики пользователя
-    :param guild: Гуилд (объект сервера)
-    :param user: объект пользователя
-    :param history: его история
+    Saving user history
+    :param guild: Server Object
+    :param user: User Object
+    :param history: their stats
     :return: None
     """
     guild_id = str(guild.id)
@@ -90,9 +93,7 @@ def save_user_history(guild: discord.Guild, user: discord.User, history: dict) -
 class UserRecord:
     def __init__(self, user: discord.User, guild: discord.Guild):
         """
-        Класс-обёртка для сохрания логов
-        Сохраняем все действия модераторов и администраторов:
-        баны, кики, муты, заметки
+        User staticstics object
         """
         self.user = user
         self.guild = guild
@@ -104,14 +105,14 @@ class UserRecord:
     @save_data
     def clear_history(self):
         """
-        Функция очистки истории пользователя
+        Clear user statistics
         """
         self.history = dict()
 
     @save_data
     def generate_history(self):
         """
-        Функция генерации истории пользователя, если она пуста
+        Generate history for new user in db
         :return: None
         """
         self.history = dict()
@@ -123,8 +124,8 @@ class UserRecord:
     @save_data
     def set_warn(self, warn_text):
         """
-        Функция создает запись в базе данных в виде предупреждения
-        :param warn_text: причина предупреждения
+        Creates a warning for the user
+        :param warn_text: warning reason
         :return: None
         """
         warning = dict()
@@ -136,8 +137,8 @@ class UserRecord:
     @save_data
     def set_note(self, note_text):
         """
-        Функция создает запись в базе данных в виде заметки
-        :param note_text: текст заметки
+        Creates a note for the user
+        :param note_text: note reason
         :return: None
         """
         note = dict()
@@ -149,9 +150,9 @@ class UserRecord:
     @save_data
     def set_mute(self, duration, reason):
         """
-        Функция создает запись в базе данных в случае, если пользователь замьючен
-        :param duration: продолжительность (в минутах)
-        :param reason: причина мута
+        Creates a mute record in db
+        :param duration: duration (in min)
+        :param reason: mute reason
         :return: None
         """
         mute = dict()
@@ -164,8 +165,8 @@ class UserRecord:
     @save_data
     def set_ban(self, reason):
         """
-        Функция создает запись в базе данных в случае, если пользователь забанен
-        :param reason: причина бана
+        Creates a ban record in db
+        :param reason: ban reason
         :return: None
         """
         ban = dict()
@@ -175,10 +176,10 @@ class UserRecord:
         self.history['records'].append(ban)
 
     @save_data
-    def clear_record(self, time_of_record):
+    def clear_record(self, time_of_record: str):
         """
-        Функция удаления записи в базе данных по таймкоду
-        :param time_of_record: таймкод записи
+        Deletes users record by the time of it
+        :param time_of_record: time 
         :return: None
         """
         for record in self.history['records']:

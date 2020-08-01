@@ -9,8 +9,8 @@ from UserBase.utils import UserRecord, get_user_history_by_id
 class AdminCog(commands.Cog):
     def __init__(self, bot) -> None:
         """
-        Cog для административных дел на сервере
-        :param bot: объект бота
+        Cog for admin commands
+        :param bot: bot object
         """
         self.bot = bot
 
@@ -22,10 +22,10 @@ class AdminCog(commands.Cog):
     @commands.has_any_role("Admin", "Moderator")
     async def warn(self, ctx, members: commands.Greedy[discord.Member], *, reason: str = None):
         """
-        Команда выдачи предупреждения пользователям
-        :param ctx: контекст команды
-        :param members: список пользователей
-        :param reason: причина предупреждения
+        Command for user warning
+        :param ctx: command context
+        :param members: list of the users
+        :param reason: reason
         :return: None
         """
         if reason is None:
@@ -39,16 +39,16 @@ class AdminCog(commands.Cog):
             user_record = UserRecord(member, ctx.guild)
             user_record.set_warn(reason)
 
-            await member.send("Вы были предупреждены: {0}".format(reason))
-            await ctx.send("{0.mention} был предупрежден за *{1}*".format(member, reason))
+            await member.send("You have been warned: {0}".format(reason))
+            await ctx.send("{0.mention} has been warned *{1}*".format(member, reason))
             await self.stats_impl(ctx, member)
 
     @warn.error
     async def warn_handler(self, ctx, what):
         """
-         Обработчик ошибок команды warn
-         :param ctx: контекст команды
-         :param what: текст ошибки
+         Exception handler for warn command
+         :param ctx: exception context
+         :param what: exception text
          :return: None
          """
         print("warn_handler: {0}".format(what))
@@ -60,11 +60,11 @@ class AdminCog(commands.Cog):
                    duration: int = 0, *,
                    reason: str = None):
         """
-        Команда мута пользователей на сервере
-        :param ctx: контекст команды
-        :param members: список пользователей для мута
-        :param duration: продолжительность мута в минутах
-        :param reason: причина мута
+        Mute command
+        :param ctx: command context
+        :param members: list of the users
+        :param duration: mute duration
+        :param reason: mute reason
         :return: None
         """
 
@@ -73,7 +73,7 @@ class AdminCog(commands.Cog):
         muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
 
         if not members:
-            await ctx.send("Не смог понять, кого мутить :)")
+            await ctx.send("No idea who to mute :)")
 
         for member in members:
             if self.bot.user == member:
@@ -82,21 +82,21 @@ class AdminCog(commands.Cog):
             user_record.set_mute(duration, reason)
 
             await member.add_roles(muted_role, reason=reason)
-            await member.edit(voice_channel=None)  # Кикаем пользователя
-            await member.send("Вы были замьючены на {0} минут по причине: {1}".format(duration, reason))
-            await ctx.send("{0.mention} был замучен за *{1}*".format(member, reason))
+            await member.edit(voice_channel=None)  # Kick the
+            await member.send("You have been muted for {0} minutes. Reason: {1}".format(duration, reason))
+            await ctx.send("{0.mention} has been muted for *{1}*".format(member, reason))
 
         if duration > 0:
-            await asyncio.sleep(duration * 60)  # Если во время мута дать еще один мут, то сработает только первый
+            await asyncio.sleep(duration * 60)  # if during the mute you give another mute then the second mute won't work
             for member in members:
-                await member.remove_roles(muted_role, reason="Время мута вышло")
+                await member.remove_roles(muted_role, reason="Mute time elapsed")
 
     @mute.error
     async def mute_handler(self, ctx, what):
         """
-         Обработчик ошибок команды mute
-         :param ctx: контекст команды
-         :param what: текст ошибки
+         Mute command exception handler
+         :param ctx: command context
+         :param what: exception text
          :return: None
          """
         print("mute_handler: {0}".format(what))
@@ -106,35 +106,35 @@ class AdminCog(commands.Cog):
     @commands.has_any_role("Admin", "Moderator")
     async def unmute(self, ctx, members: commands.Greedy[discord.Member]):
         """
-        Команда размута пользователя сервера
-        :param ctx: контекст команды
-        :param members: список пользователей для размута
+        Unmute command
+        :param ctx: command context
+        :param members: list of users to unmute
         :return: None
         """
         muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
         for member in members:
-            await member.remove_roles(muted_role, reason="Разбанен стафом")
+            await member.remove_roles(muted_role, reason="unmuted my staff member")
 
     @commands.command()
     @commands.has_any_role("Admin")
     async def clear_stats(self, ctx, user: discord.User):
         """
-        Команда очистки статистики пользователя
-        :param ctx: контекст команды
-        :param user: объект пользователя
+        Clear statistics command
+        :param ctx: command context
+        :param user: user object
         :return: None
         """
         user_record = UserRecord(user, ctx.guild)
         user_record.clear_history()
-        await ctx.channel.send("История пользователя была очищена")
+        await ctx.channel.send("User statistics has been cleared")
         await self.stats_impl(ctx, user)
 
     @clear_stats.error
     async def clear_stats_handler(self, ctx, what):
         """
-        Обработчик ошибок команды clear_stats
-        :param ctx: контекст команды
-        :param what: текст ошибки
+        clear stats command exception handler
+        :param ctx: command context
+        :param what: exception text
         :return: None
         """
         print("clear_stats_handler: {0}".format(what))
@@ -143,10 +143,10 @@ class AdminCog(commands.Cog):
     @staticmethod
     async def stats_impl(ctx, user: discord.User):
         """
-        Реализация функции просмотра статистики
-        :param ctx:
-        :param user:
-        :return:
+        statistic command implementation
+        :param ctx: command context
+        :param user: user object
+        :return: None
         """
         user_record = UserRecord(user, ctx.guild)
 
@@ -157,9 +157,9 @@ class AdminCog(commands.Cog):
     @commands.has_any_role("Admin", "Moderator")
     async def stats(self, ctx, user: discord.User):
         """
-        Команда печатания статистики пользователя
-        :param ctx: контекст команды
-        :param user: объект пользователя
+        
+        :param ctx: command context
+        :param user: user object
         :return: None
         """
         await self.stats_impl(ctx, user)
@@ -167,9 +167,9 @@ class AdminCog(commands.Cog):
     @stats.error
     async def stats_handler(self, ctx, error):
         """
-        Локальный обработчик ошибок команды stats.
-        :param ctx: контектст команды
-        :param error: исключение
+        stats command exception handler
+        :param ctx: command context
+        :param error: exception text
         :return: None
         """
         print(error.args)
@@ -186,6 +186,13 @@ class AdminCog(commands.Cog):
     @commands.command()
     @commands.has_any_role("Admin", "Moderator")
     async def note(self, ctx, members: commands.Greedy[discord.Member], *, note: str = None):
+        """
+        Note command
+        :param ctx: command context
+        :param members: members list
+        :param note: note text
+        :return: None
+        """
         for member in members:
             if self.bot.user == member:
                 continue
@@ -196,9 +203,9 @@ class AdminCog(commands.Cog):
     @note.error
     async def note_handler(self, ctx, error):
         """
-        Обработчик ошибок команды note
-        :param ctx: контекст команды
-        :param error: текст ошибки
+        note command exception handler
+        :param ctx: command context
+        :param error: error text
         :return: None
         """
         print("note_handler: {0}".format(error))
@@ -206,10 +213,10 @@ class AdminCog(commands.Cog):
 
     async def ban_impl(self, ctx, user: discord.User, reason: str = None):
         """
-        Реализация команды бана на сервере
-        :param ctx: контекст команды
-        :param user: пользователь дискорда
-        :param reason: причина бана
+        Ban command implementation
+        :param ctx: command context
+        :param user: user object
+        :param reason: ban reason
         :return: None
         """
         if reason is None:
@@ -221,19 +228,19 @@ class AdminCog(commands.Cog):
         user_record = UserRecord(user, ctx.guild)
         user_record.set_ban(reason)
 
-        message = "Вы были забанены по причине: {0}".format(reason)
+        message = "You have been banned: {0}".format(reason)
         await user.send(message)
         await ctx.guild.ban(user, reason=reason)
-        await ctx.channel.send("Пользователь {0} был забанен".format(user))
+        await ctx.channel.send("User {0} has been banned".format(user))
 
     @commands.command()
     @commands.has_role("Admin")
     async def ban(self, ctx, user: discord.User, *, reason: str = None):
         """
-        Команда бана пользователя со сервера
-        :param user: Пользователь, которого баним
-        :param ctx: Контекст команды
-        :param reason: Причина бана
+        ban command
+        :param user: user object
+        :param ctx: command context
+        :param reason: ban reason
         :return: None
         """
         await self.ban_impl(ctx, user, reason)
@@ -242,9 +249,9 @@ class AdminCog(commands.Cog):
     @ban.error
     async def ban_handler(self, ctx, error):
         """
-        Обработчик ошибок команды ban
-        :param ctx: контекст команды
-        :param error: текст ошибки
+        Exception handler of ban
+        :param ctx: command context
+        :param error: exception text
         :return: None
         """
         print("ban_handler: {0}".format(error))
@@ -253,25 +260,25 @@ class AdminCog(commands.Cog):
     @staticmethod
     async def unban_impl(ctx, user_id):
         """
-        Имплементация команды unban
-        :param ctx: контекст команды
-        :param user_id: id пользователя
+        implementation of unban command
+        :param ctx: command context
+        :param user_id: discord user id
         :return: None
         """
         ban_list = await ctx.guild.bans()
         for ban_entry in ban_list:
             if str(ban_entry.user.id) == str(user_id):
                 await ctx.guild.unban(ban_entry.user)
-                await ban_entry.user.send("Вы были разбанены!")
-                await ctx.send("Пользователь {0} разбанен!".format(ban_entry.user.mention))
+                await ban_entry.user.send("You have been unbanned!")
+                await ctx.send("User {0} has been unbanned!".format(ban_entry.user.mention))
 
     @commands.command()
     @commands.has_role("Admin")
     async def unban(self, ctx, user_id):
         """
-        Команда разбана
-        :param user_id: ID пользователя дискорд
-        :param ctx: контекстс команды
+        Unban command
+        :param user_id: discord id
+        :param ctx: command context
         :return: None
         """
         await self.unban_impl(ctx, user_id)
@@ -279,9 +286,9 @@ class AdminCog(commands.Cog):
     @unban.error
     async def unban_handler(self, ctx, error):
         """
-        Обработчик ошибок команды unban
-        :param ctx: контекст команды
-        :param error: текст ошибки
+        Exception handler of unban
+        :param ctx: command context
+        :param error: exception text
         :return: None
         """
         print("unban_handler: {0}".format(error))
@@ -291,10 +298,10 @@ class AdminCog(commands.Cog):
     @commands.has_role("Admin")
     async def soft_ban(self, ctx, user: discord.User, *, reason: str = None):
         """
-        Команда "легкого бана" - бан и сразу разбан
-        :param ctx: контекст команды
-        :param user: объект пользователя
-        :param reason: причина софтбана
+        Softban - ban and instand unban
+        :param ctx: command context
+        :param user: user object
+        :param reason: softban reason
         :return: None
         """
         await self.ban_impl(ctx, user, reason)
@@ -303,9 +310,9 @@ class AdminCog(commands.Cog):
     @soft_ban.error
     async def soft_ban_handler(self, ctx, error):
         """
-        Обработчик ошибок команды soft_ban
-        :param ctx: контекст команды
-        :param error: текст ошибки
+        Exception handler of soft_ban
+        :param ctx: command context
+        :param error: exception text
         :return: None
         """
         print("soft_ban_handler: {0}".format(error))
@@ -315,9 +322,9 @@ class AdminCog(commands.Cog):
     @commands.has_any_role("Admin", "Moderator")
     async def prune_until(self, ctx, message_id: str = None):
         """
-        Команда удаления всех сообщений в чате вплоть до сообщения с message_id
-        :param ctx: контекст команды
-        :param message_id: id сообщения, до которого происходит удаление
+        Delete all the messages in the chat until the message with [message_id]
+        :param ctx: command context
+        :param message_id: message id to delete until
         :return: None
         """
         channel = ctx.channel
@@ -331,9 +338,9 @@ class AdminCog(commands.Cog):
     @prune_until.error
     async def prune_until_handler(self, ctx, error):
         """
-        Обработчик ошибок команды prune_until
-        :param ctx: контекст команды
-        :param error: текст ошибки
+        Exception handler of prune_until
+        :param ctx: command context
+        :param error: exception text
         :return: None
         """
         print("prune_until_handler: {0}".format(error))
@@ -343,9 +350,9 @@ class AdminCog(commands.Cog):
     @commands.has_any_role("Admin", "Moderator")
     async def prune(self, ctx, number: int):
         """
-        Удаляет [number] сообщений
-        :param ctx: контекст команды
-        :param number: количество сообщений
+        Deletes [number] of messages
+        :param ctx: command context
+        :param number: number of messages
         :return: None
         """
         channel = ctx.channel
@@ -356,9 +363,9 @@ class AdminCog(commands.Cog):
     @prune.error
     async def prune_handler(self, ctx, error):
         """
-        Обработчик ошибок команды prune
-        :param ctx: контекст команды
-        :param error: текст ошибки
+        Exception handler of prune
+        :param ctx: command context
+        :param error: exception text
         :return: None
         """
         print("prune_handler: {0}".format(error))
@@ -368,10 +375,10 @@ class AdminCog(commands.Cog):
     @commands.has_any_role("Admin", "Moderator")
     async def clear_record(self, ctx, user: discord.User, *, time_of_record: str):
         """
-        Удаляет запись или заметку по временной метки
-        :param ctx: контекст команды
-        :param user: объект пользователя
-        :param time_of_record: временная метка
+        Delete record or note by the time of record/note
+        :param ctx: command context
+        :param user: user object
+        :param time_of_record: time
         :return: None
         """
         user_record = UserRecord(user, ctx.guild)
@@ -381,9 +388,9 @@ class AdminCog(commands.Cog):
     @clear_record.error
     async def clear_record_handler(self, ctx, error):
         """
-         Обработчик ошибок команды clear_record
-         :param ctx: контекст команды
-         :param error: текст ошибки
+         Exception handler of clear_record
+         :param ctx: command context
+         :param error: exception text
          :return: None
          """
         print("clear_record_handler: {0}".format(error))
@@ -392,8 +399,8 @@ class AdminCog(commands.Cog):
 
 def setup(bot):
     """
-    Функция добавления функциональности Cog к боту
-    :param bot: объект бота
+    Bot setup. Activates admin cog
+    :param bot: bot object
     :return: None
     """
     bot.add_cog(AdminCog(bot))
